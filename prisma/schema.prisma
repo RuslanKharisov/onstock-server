@@ -1,0 +1,140 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Stock {
+  id         String   @id @default(cuid())
+  supplierId Int
+  productId  String
+  quantity   Int
+  product    Product  @relation(fields: [productId], references: [id])
+  supplier   Supplier @relation(fields: [supplierId], references: [id])
+}
+
+model Product {
+  id          String  @id @default(cuid())
+  sku         String  @unique
+  name        String
+  description String
+  Stock       Stock[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model User {
+  id                      String                 @id @default(cuid())
+  email                   String                 @unique
+  role                    ROLE                   @default(USER)
+  name                    String?
+  emailVerified           DateTime?
+  image                   String?
+  password                String?
+  isTwoFactorEnabled      Boolean                @default(false)
+  twoFactorConfirmationId String?
+  accounts                Account[]
+  sessions                Session[]
+  Supplier                Supplier?
+  TwoFactorConfirmation   TwoFactorConfirmation?
+
+  @@map("users")
+}
+
+model VerificationToken {
+  token   String   @unique
+  expires DateTime
+  email   String
+  id      String   @id @default(cuid())
+
+  @@unique([email, token])
+}
+
+model PasswordResetToken {
+  id      String   @id @default(cuid())
+  token   String   @unique
+  email   String
+  expires DateTime
+
+  @@unique([email, token])
+}
+
+model TwoFactorToken {
+  id      String   @id @default(cuid())
+  token   String   @unique
+  email   String
+  expires DateTime
+
+  @@unique([email, token])
+}
+
+model TwoFactorConfirmation {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Supplier {
+  id            Int            @id @default(autoincrement())
+  name          String
+  email         String
+  userId        String         @unique
+  siteUrl       String?
+  tariffId      Int
+  stocks        Stock[]
+  subscriptions Subscription[]
+  tariff        Tariff         @relation(fields: [tariffId], references: [id])
+  user          User           @relation(fields: [userId], references: [id])
+}
+
+model Subscription {
+  id         Int      @id @default(autoincrement())
+  supplierId Int
+  startDate  DateTime @default(now())
+  endDate    DateTime
+  tariffId   Int
+  supplier   Supplier @relation(fields: [supplierId], references: [id])
+  tariff     Tariff   @relation(fields: [tariffId], references: [id])
+}
+
+model Tariff {
+  id            Int            @id @default(autoincrement())
+  name          String         @unique
+  pricePerUnit  Float
+  maxProducts   Int
+  subscriptions Subscription[]
+  Supplier      Supplier[]
+}
+
+enum ROLE {
+  ADMIN
+  USER
+  SUPPLIER
+}
