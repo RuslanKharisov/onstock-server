@@ -8,6 +8,19 @@ export type Role = 'ADMIN' | 'SUPPLIER' | 'USER';
 export class UsersService {
   constructor(private prisma: PrismaService) {}
 
+  async createUser(data: {
+    name: string;
+    email: string;
+    password: string;
+  }): Promise<User> {
+    return this.prisma.user.create({
+      data: {
+        ...data,
+        // Остальные поля будут заполнены значениями по умолчанию или null
+      },
+    });
+  }
+
   async findAll(): Promise<User[]> {
     return this.prisma.user.findMany();
   }

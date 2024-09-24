@@ -9,11 +9,11 @@ datasource db {
 
 model Stock {
   id         String   @id @default(cuid())
+  supplier   Supplier @relation(fields: [supplierId], references: [id])
   supplierId Int
+  product    Product  @relation(fields: [productId], references: [id])
   productId  String
   quantity   Int
-  product    Product  @relation(fields: [productId], references: [id])
-  supplier   Supplier @relation(fields: [supplierId], references: [id])
 }
 
 model Product {
@@ -30,14 +30,15 @@ model Account {
   type              String
   provider          String
   providerAccountId String
-  refresh_token     String?
-  access_token      String?
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
   expires_at        Int?
   token_type        String?
   scope             String?
-  id_token          String?
+  id_token          String? @db.Text
   session_state     String?
-  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
 }
@@ -58,21 +59,21 @@ model User {
   emailVerified           DateTime?
   image                   String?
   password                String?
-  isTwoFactorEnabled      Boolean                @default(false)
-  twoFactorConfirmationId String?
   accounts                Account[]
   sessions                Session[]
   Supplier                Supplier?
+  isTwoFactorEnabled      Boolean                @default(false)
+  twoFactorConfirmationId String?
   TwoFactorConfirmation   TwoFactorConfirmation?
 
   @@map("users")
 }
 
 model VerificationToken {
-  token   String   @unique
-  expires DateTime
-  email   String
   id      String   @id @default(cuid())
+  token   String   @unique
+  email   String
+  expires DateTime
 
   @@unique([email, token])
 }
@@ -97,44 +98,47 @@ model TwoFactorToken {
 
 model TwoFactorConfirmation {
   id     String @id @default(cuid())
-  userId String @unique
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
+  userId String
+  user   User   @relation(onDelete: Cascade, fields: [userId], references: [id])
 
-model Supplier {
-  id            Int            @id @default(autoincrement())
-  name          String
-  email         String
-  userId        String         @unique
-  siteUrl       String?
-  tariffId      Int
-  stocks        Stock[]
-  subscriptions Subscription[]
-  tariff        Tariff         @relation(fields: [tariffId], references: [id])
-  user          User           @relation(fields: [userId], references: [id])
-}
-
-model Subscription {
-  id         Int      @id @default(autoincrement())
-  supplierId Int
-  startDate  DateTime @default(now())
-  endDate    DateTime
-  tariffId   Int
-  supplier   Supplier @relation(fields: [supplierId], references: [id])
-  tariff     Tariff   @relation(fields: [tariffId], references: [id])
-}
-
-model Tariff {
-  id            Int            @id @default(autoincrement())
-  name          String         @unique
-  pricePerUnit  Float
-  maxProducts   Int
-  subscriptions Subscription[]
-  Supplier      Supplier[]
+  @@unique([userId])
 }
 
 enum ROLE {
   ADMIN
-  USER
   SUPPLIER
+  USER
+}
+
+model Supplier {
+  id      Int     @id @default(autoincrement())
+  name    String
+  email   String
+  siteUrl String?
+  stocks  Stock[]
+  userId  String  @unique
+  user    User    @relation(fields: [userId], references: [id])
+  tariffId      Int           // Связь с тарифом
+  tariff        Tariff        @relation(fields: [tariffId], references: [id])
+  subscriptions Subscription[] // Связь с подписками поставщика
+}
+
+model Subscription {
+  id            Int       @id @default(autoincrement())
+  supplier      Supplier  @relation(fields: [supplierId], references: [id])
+  supplierId    Int
+  tariff        Tariff    @relation(fields: [tariffId], references: [id])
+  tariffId      Int
+  startDate     DateTime  @default(now())
+  endDate       DateTime  // Дата истечения срока подписки
+}
+
+// Модель для хранения тарифов
+model Tariff {
+  id            Int       @id @default(autoincrement())
+  name          String    @unique
+  maxProducts   Int       // Максимальное количество товаров по тарифу
+  pricePerUnit  Float     // Стоимость за единицу товара
+  subscriptions Subscription[] // Связь с подписками
+  Supplier Supplier[]
 }
