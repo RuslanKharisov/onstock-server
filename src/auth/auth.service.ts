@@ -2,15 +2,16 @@ import { Injectable } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
 import { User } from '@prisma/client';
 import { RegisterDto } from './dto/register.dto';
-// import { JwtService } from '@nestjs/jwt';
-// import bcrypt from 'bcrypt';
+import { JwtTokenService } from './jwt/jwt.service';
+import { MailService } from './mail/mail.service';
 import * as bcrypt from 'bcryptjs';
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly usersService: UsersService,
-    // private jwtService: JwtService,
+    private jwtTokenService: JwtTokenService,
+    private mailService: MailService,
   ) {}
 
   /* логика регистрации нового пользователя */
@@ -36,23 +37,19 @@ export class AuthService {
       password: hashedPassword,
     });
 
-    // Отправка письма для подтверждения email (опционально)
-    // await this.sendVerificationEmail(newUser.email);
+    // Генерация верификационного токена
+    const verificationToken =
+      await this.jwtTokenService.generateVerificationToken(email);
+
+    // Отправка email с верификационной ссылкой
+    await this.mailService.sendVerificationEmail(
+      newUser.email,
+      verificationToken,
+    );
 
     return {
       success: 'На указанную почту отправлено письмо для подтверждения!',
     };
-  }
-
-  // Логика отправки email для подтверждения (если требуется)
-  // async sendVerificationEmail(email: string) {
-  //   const verificationToken = await this.generateVerificationToken(email);
-  //   await this.emailService.sendVerificationEmail(email, verificationToken);
-  // }
-
-  private generateVerificationToken(email: string): string {
-    // Реализуйте генерацию токена
-    return 'some-random-token';
   }
 
   /*  Логика аутентификации зарегистрированного пользователя  */
