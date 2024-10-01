@@ -73,4 +73,17 @@ export class AuthController {
 
     return { success: 'Email успешно подтвержден' };
   }
+
+  @Post('reset-password')
+  async sendResetPasswordLink(@Body('email') email: string) {
+    return this.authService.sendResetPasswordLink(email);
+  }
+
+  @Post('new-password')
+  async resetPassword(
+    @Body('token') token: string,
+    @Body('newPassword') newPassword: string,
+  ) {
+    return this.authService.resetPassword(token, newPassword);
+  }
 }

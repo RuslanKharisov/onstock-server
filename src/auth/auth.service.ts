@@ -18,6 +18,7 @@ export class AuthService {
     private readonly sessionServise: SessionService,
   ) {}
 
+  /** Регистрация пользователя */
   async register(
     registerDto: RegisterDto,
   ): Promise<{ success?: string; error?: string }> {
@@ -45,10 +46,9 @@ export class AuthService {
       expires: new Date(Date.now() + 1000 * 60 * 60 * 24), // токен истекает через 24 часа
     });
 
-    await this.mailService.sendVerificationEmail(
-      newUser.email,
-      verificationToken,
-    );
+    const confirmLink = `${process.env.RESEND_CONFIRM_URL}/verify-email?token=${verificationToken}`;
+
+    await this.mailService.sendEmailConfifirmationLink(newUser.email, confirmLink);
 
     return {
       success: 'На указанную почту отправлено письмо для подтверждения!',
@@ -71,10 +71,8 @@ export class AuthService {
         email: user.email,
         expires: new Date(Date.now() + 1000 * 60 * 60 * 24),
       });
-      await this.mailService.sendVerificationEmail(
-        user.email,
-        verificationToken,
-      );
+      const confirmLink = `${process.env.RESEND_CONFIRM_URL}/verify-email?token=${verificationToken}`;
+      await this.mailService.sendEmailConfifirmationLink(user.email, confirmLink);
 
       return { error: 'Email не подтверждён. Письмо отправлено повторно.' };
     }
@@ -90,7 +88,6 @@ export class AuthService {
   }
 
   /* Логика логина и создания сессии */
-
   async login(user: User) {
     // Создание новой сессии
     const sessionToken = await this.sessionServise.createSession(
@@ -101,5 +98,51 @@ export class AuthService {
     return {
       sessionToken, // Возвращаем токен сессии на клиент
     };
+  }
+
+  /* Логика для отправки ссылки на сброс пароля */
+  async sendResetPasswordLink(
+    email: string,
+  ): Promise<{ success?: string; error?: string }> {
+    const user = await this.usersService.findOneByEmail(email);
+    if (!user) {
+      return { error: 'Пользователь с таким email не найден' };
+    }
+
+    // Генерация токена для сброса пароля
+    const resetToken = await this.jwtTokenService.generateResetToken(
+      user.id,
+      user.email,
+    );
+
+    // Ссылка на страницу сброса пароля
+    const resetLink = `${process.env.RESEND_CLIENT_URL}/new-password?token=${resetToken}`;
+
+    // Отправка email с ссылкой на сброс пароля
+    await this.mailService.sendResetPasswordLink(user.email, resetLink);
+
+    return { success: 'Ссылка для сброса пароля отправлена на вашу почту' };
+  }
+
+  /* Логика для сброса пароля */
+  async resetPassword(
+    token: string,
+    newPassword: string,
+  ): Promise<{ success?: string; error?: string }> {
+    // Валидация токена
+    const payload = await this.jwtTokenService.verifyResetToken(token);
+    if (!payload) {
+      return { error: 'Неверный или просроченный токен' };
+    }
+
+    const { sub: userId } = payload;
+
+    // Хэширование нового пароля
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // Обновление пароля в базе данных
+    await this.usersService.updateUserPasword(userId, hashedPassword);
+
+    return { success: 'Пароль успешно изменён' };
   }
 }

@@ -50,4 +50,13 @@ export class UsersService {
       },
     });
   }
+
+  async updateUserPasword(userId: string, newPassword: string): Promise<void> {
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        password: newPassword,
+      },
+    });
+  }
 }
