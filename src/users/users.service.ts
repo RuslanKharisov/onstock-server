@@ -41,22 +41,13 @@ export class UsersService {
     }
   }
 
-  // async findOrCreate(criteria: { yandexId: string }): Promise<User> {
-  //   // Попытка найти пользователя по yandexId
-  //   let user = await this.prisma.findOne({ where: { yandexId: criteria.yandexId } });
-
-  //   // Если пользователя нет, создаем нового
-  //   if (!user) {
-  //     user = this.prisma.create({
-  //       yandexId: criteria.yandexId,
-  //       // Вы можете добавить здесь другие поля, например:
-  //       // name: criteria.name,
-  //       // email: criteria.email,
-  //     });
-  //     // Сохраняем нового пользователя в базе данных
-  //     user = await this.prisma.save(user);
-  //   }
-
-  //   return user;
-  // }
+  async updateUserEmail(id: string, email: string) {
+    return this.prisma.user.update({
+      where: { id: id },
+      data: {
+        emailVerified: new Date(),
+        email: email,
+      },
+    });
+  }
 }

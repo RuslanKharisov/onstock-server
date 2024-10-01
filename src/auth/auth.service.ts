@@ -1,47 +1,50 @@
 import { Injectable } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
-import { User } from '@prisma/client';
 import { RegisterDto } from './dto/register.dto';
 import { JwtTokenService } from './jwt/jwt.service';
 import { MailService } from './mail/mail.service';
 import * as bcrypt from 'bcryptjs';
+import { VerificationTokenService } from './verificationToken/verification-token.service';
+import { SessionService } from './session/session.service';
+import { User } from '@prisma/client';
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly usersService: UsersService,
-    private jwtTokenService: JwtTokenService,
-    private mailService: MailService,
+    private readonly jwtTokenService: JwtTokenService,
+    private readonly mailService: MailService,
+    private readonly verificationTokenService: VerificationTokenService,
+    private readonly sessionServise: SessionService,
   ) {}
-
-  /* логика регистрации нового пользователя */
 
   async register(
     registerDto: RegisterDto,
   ): Promise<{ success?: string; error?: string }> {
     const { name, email, password } = registerDto;
 
-    // Проверка на существование пользователя с таким email
     const existingUser = await this.usersService.findOneByEmail(email);
     if (existingUser) {
       return { error: 'Указанный почтовый адрес уже используется!' };
     }
 
-    // Хэширование пароля
     const hashedPassword = await bcrypt.hash(password, 10);
-
-    // Создание пользователя
-    const newUser: User = await this.usersService.createUser({
+    const newUser = await this.usersService.createUser({
       name,
       email,
       password: hashedPassword,
     });
 
-    // Генерация верификационного токена
     const verificationToken =
       await this.jwtTokenService.generateVerificationToken(email);
 
-    // Отправка email с верификационной ссылкой
+    // Сохранение токена в базу данных
+    await this.verificationTokenService.createToken({
+      token: verificationToken,
+      email,
+      expires: new Date(Date.now() + 1000 * 60 * 60 * 24), // токен истекает через 24 часа
+    });
+
     await this.mailService.sendVerificationEmail(
       newUser.email,
       verificationToken,
@@ -52,24 +55,51 @@ export class AuthService {
     };
   }
 
-  /*  Логика аутентификации зарегистрированного пользователя  */
-
   /*  Проверка пароля при логине  */
   async validateUser(email: string, password: string): Promise<any> {
     const user = await this.usersService.findOneByEmail(email);
-    console.log('🚀 ~ user from db:', user);
-    if (user && (await bcrypt.compare(password, user.password))) {
-      const { ...result } = user;
-      return result;
+    if (!user) {
+      return { error: 'Пользователь с данным Email не зарегистрирован' };
     }
-    return null;
+
+    /* Если email не подтверждён, отправляем письмо с токеном */
+    if (!user.emailVerified) {
+      const verificationToken =
+        await this.jwtTokenService.generateVerificationToken(email);
+      await this.verificationTokenService.createToken({
+        token: verificationToken,
+        email: user.email,
+        expires: new Date(Date.now() + 1000 * 60 * 60 * 24),
+      });
+      await this.mailService.sendVerificationEmail(
+        user.email,
+        verificationToken,
+      );
+
+      return { error: 'Email не подтверждён. Письмо отправлено повторно.' };
+    }
+
+    /* Проверяем пароль */
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+
+    if (!isPasswordValid) {
+      return null; // Если пароль неверный
+    }
+
+    return user;
   }
 
-  async login(user: any) {
-    const payload = { username: user.email, sub: user.id };
+  /* Логика логина и создания сессии */
+
+  async login(user: User) {
+    // Создание новой сессии
+    const sessionToken = await this.sessionServise.createSession(
+      user.id,
+      user.email,
+    );
+
     return {
-      payload,
-      // access_token: this.jwtService.sign(payload),
+      sessionToken, // Возвращаем токен сессии на клиент
     };
   }
 }
