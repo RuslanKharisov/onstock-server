@@ -6,15 +6,25 @@ import { AuthService } from './auth.service';
 @Injectable()
 export class LocalStrategy extends PassportStrategy(Strategy) {
   constructor(private authService: AuthService) {
-    super({ usernameField: 'email' });
+    super({
+      usernameField: 'email', // Используем email вместо username
+      passwordField: 'password', // Пароль
+      passReqToCallback: true, // Чтобы получить доступ к request
+    });
   }
 
-  async validate(email: string, password: string): Promise<any> {
-    console.log(email);
-    const user = await this.authService.validateUser(email, password);
-    if (!user) {
-      throw new UnauthorizedException();
+  async validate(req: any, email: string, password: string): Promise<any> {
+    const code = req.body.code; // Получаем код из тела запроса
+
+    // Валидируем пользователя и код 2FA
+    const user = await this.authService.validateUser(email, password, code);
+
+    if (!user || user.error) {
+      throw new UnauthorizedException(
+        user ? user.error : 'Неверные учетные данные',
+      );
     }
-    return user;
+
+    return user; // Возвращаем пользователя, если все проверки пройдены
   }
 }

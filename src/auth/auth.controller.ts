@@ -11,6 +11,7 @@ import { RegisterDto } from './dto/register.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { VerificationTokenService } from './verificationToken/verification-token.service';
 import { UsersService } from 'src/users/users.service';
+import { User } from '@prisma/client';
 
 @Controller('auth')
 export class AuthController {
@@ -27,13 +28,21 @@ export class AuthController {
 
   @UseGuards(AuthGuard('local'))
   @Post('login')
-  async login(@Request() req) {
+  async login(@Request() req, @Body() body: { code?: string }) {
+    console.log('🚀 ~ AuthController ~ login ~ body:', body);
     const user = req.user;
 
     // Если email не подтверждён, возвращаем ошибку
     if (user.error) {
       return { error: user.error };
     }
+
+    // Если двухфакторная аутентификация требуется
+    if (user.twoFactor) {
+      return { twoFactor: true, success: user.success };
+    }
+
+    // Если все проверки пройдены, создаём сессию
     return this.authService.login(req.user);
   }
 

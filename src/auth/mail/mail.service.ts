@@ -29,4 +29,13 @@ export class MailService {
       html: `<p>Нажмите <a href="${resetLink}">здесь</a>, чтобы сбросить пароль</p>`,
     });
   }
+
+  async sendTwoFactorTokenEmail(email: string, token: string): Promise<void> {
+    await this.resend.emails.send({
+      from: 'Промышленный склад OnStock <onboarding@resend.dev>',
+      to: email,
+      subject: 'Код для входа',
+      html: `<p>Код авторизации: <h2>${token}</a></p>`,
+    });
+  }
 }

@@ -31,4 +31,8 @@ export class JwtTokenService {
       return null;
     }
   }
+
+  async generate2FACode() {
+    return Math.floor(100000 + Math.random() * 900000);
+  }
 }

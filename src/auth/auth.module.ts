@@ -11,6 +11,9 @@ import { MailService } from './mail/mail.service';
 import { JwtModule } from '@nestjs/jwt';
 import { VerificationTokenModule } from './verificationToken/verification-token.module';
 import { SessionModule } from './session/session.module';
+import { TwoFactorConfirmationService } from './two-factor-confirmation.service';
+import { TwoFactorTokenService } from './two-factor-token.service';
+import { PrismaModule } from 'src/prisma/prisma.module';
 
 @Module({
   imports: [
@@ -18,12 +21,20 @@ import { SessionModule } from './session/session.module';
     PassportModule,
     VerificationTokenModule,
     SessionModule,
+    PrismaModule,
     JwtModule.register({
       secret: process.env.JWT_SECRET,
       signOptions: { expiresIn: '1h' },
     }),
   ],
-  providers: [AuthService, LocalStrategy, JwtTokenService, MailService],
+  providers: [
+    AuthService,
+    LocalStrategy,
+    JwtTokenService,
+    MailService,
+    TwoFactorConfirmationService,
+    TwoFactorTokenService,
+  ],
   controllers: [AuthController],
 })
 export class AuthModule {}
