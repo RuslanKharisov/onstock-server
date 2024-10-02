@@ -11,7 +11,6 @@ import { RegisterDto } from './dto/register.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { VerificationTokenService } from './verificationToken/verification-token.service';
 import { UsersService } from 'src/users/users.service';
-import { User } from '@prisma/client';
 
 @Controller('auth')
 export class AuthController {
@@ -29,7 +28,6 @@ export class AuthController {
   @UseGuards(AuthGuard('local'))
   @Post('login')
   async login(@Request() req, @Body() body: { code?: string }) {
-    console.log('🚀 ~ AuthController ~ login ~ body:', body);
     const user = req.user;
 
     // Если email не подтверждён, возвращаем ошибку

@@ -154,7 +154,6 @@ export class AuthService {
 
   /* Логика логина и создания сессии */
   async login(user: User) {
-    console.log('🚀 ~ AuthService ~ login ~ user:', user);
     // Создание новой сессии
     const sessionToken = await this.sessionServise.createSession(
       user.id,
