@@ -153,7 +153,22 @@ export class AuthService {
   }
 
   /* Логика логина и создания сессии */
-  async login(user: User) {
+  async login(user: User): Promise<{ sessionToken: string }> {
+    // Поиск существующей сессии для данного пользователя
+    const existingSession = await this.sessionServise.findSessionByUserId(
+      user.id,
+    );
+
+    if (existingSession) {
+      // Если сессия существует, проверяем срок её действия
+      if (new Date(existingSession.expires) > new Date()) {
+        // Если сессия еще действительна, возвращаем её
+        return { sessionToken: existingSession.sessionToken };
+      } else {
+        // Если сессия истекла, удаляем её
+        await this.sessionServise.deleteSession(existingSession.sessionToken);
+      }
+    }
     // Создание новой сессии
     const sessionToken = await this.sessionServise.createSession(
       user.id,

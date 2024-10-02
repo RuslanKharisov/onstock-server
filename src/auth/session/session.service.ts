@@ -32,6 +32,17 @@ export class SessionService {
     });
   }
 
+  async findSessionByUserId(userId: string) {
+    return this.prisma.session.findFirst({
+      where: {
+        userId: userId,
+        expires: {
+          gte: new Date(), // Находим сессию, срок действия которой еще не истек
+        },
+      },
+    });
+  }
+
   async deleteSession(token: string) {
     return this.prisma.session.delete({
       where: { sessionToken: token },
