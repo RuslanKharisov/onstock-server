@@ -9,7 +9,7 @@ datasource db {
 
 model Stock {
   id         String   @id @default(cuid())
-  supplier   Supplier @relation(fields: [supplierId], references: [id])
+  supplier   Supplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
   supplierId Int
   product    Product  @relation(fields: [productId], references: [id])
   productId  String
@@ -120,12 +120,12 @@ model Supplier {
   user    User    @relation(fields: [userId], references: [id])
   tariffId      Int           // Связь с тарифом
   tariff        Tariff        @relation(fields: [tariffId], references: [id])
-  subscriptions Subscription[] // Связь с подписками поставщика
+  subscriptions Subscription[] 
 }
 
 model Subscription {
   id            Int       @id @default(autoincrement())
-  supplier      Supplier  @relation(fields: [supplierId], references: [id])
+  supplier      Supplier  @relation(fields: [supplierId], references: [id], onDelete: Cascade)
   supplierId    Int
   tariff        Tariff    @relation(fields: [tariffId], references: [id])
   tariffId      Int
