@@ -14,6 +14,7 @@ import { SessionModule } from './session/session.module';
 import { TwoFactorConfirmationService } from './two-factor-confirmation.service';
 import { TwoFactorTokenService } from './two-factor-token.service';
 import { PrismaModule } from 'src/prisma/prisma.module';
+import { JwtStrategy } from './jwt.strategy';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { PrismaModule } from 'src/prisma/prisma.module';
   providers: [
     AuthService,
     LocalStrategy,
+    JwtStrategy,
     JwtTokenService,
     MailService,
     TwoFactorConfirmationService,
