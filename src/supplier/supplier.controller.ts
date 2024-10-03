@@ -25,6 +25,7 @@ export class SupplierController {
     @Req() req: Request & { user: JwtPayload },
   ) {
     const userId = req.user.userId;
+    console.log('🚀 ~ SupplierController ~ userId:', userId);
     const result = await this.supplierService.createSupplier(values, userId);
     if (result.success) {
       return { message: result.message };
@@ -33,12 +34,14 @@ export class SupplierController {
     }
   }
 
-  @Patch(':id')
+  @Patch()
   async updateSupplier(
-    @Param('id') id: string,
+    // @Param('id') id: string,
     @Body() values: Partial<Supplier>,
+    @Req() req: Request & { user: JwtPayload },
   ) {
-    return await this.supplierService.updateSupplier(values, parseInt(id));
+    const userId = req.user.userId;
+    return await this.supplierService.updateSupplierByUser(values, userId);
   }
 
   @Get('user/:userId')

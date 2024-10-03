@@ -6,6 +6,6 @@ export class AppService {
     throw new Error('Method not implemented.');
   }
   getHello(): string {
-    return 'Hello World!';
+    return 'Hello World! from NEST App';
   }
 }

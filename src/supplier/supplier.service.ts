@@ -52,9 +52,9 @@ export class SupplierService {
     }
   }
 
-  async updateSupplier(values: Partial<Supplier>, supplierId: number) {
+  async updateSupplierByUser(values: Partial<Supplier>, userId: string) {
     return await this.prisma.supplier.update({
-      where: { id: supplierId },
+      where: { userId: userId },
       data: { ...values },
     });
   }
