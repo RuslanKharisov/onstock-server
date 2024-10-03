@@ -13,6 +13,10 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(payload: any) {
+    console.log('JWT Payload:', payload); // Логирование содержимого токена
+    if (!payload || !payload.sub) {
+      return null;
+    }
     return { userId: payload.sub, email: payload.email };
   }
 }

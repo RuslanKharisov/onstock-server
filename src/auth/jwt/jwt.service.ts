@@ -18,14 +18,15 @@ export class JwtTokenService {
   // Генерация токена для сессии пользователя
   async generateSessionToken(userId: string, email: string): Promise<string> {
     const payload = { sub: userId, email };
-    const secret = this.configService.get<string>('JWT_SECRET'); // Получаем секрет из env
-    return this.jwtService.sign(payload, { secret });
+    const secret = this.configService.get<string>('JWT_SECRET'); // .env
+    const expiresIn = '7d';
+    return this.jwtService.sign(payload, { secret, expiresIn });
   }
 
   // Генерация токена для сброса пароля
   async generateResetToken(userId: string, email: string): Promise<string> {
     const payload = { sub: userId, email };
-    return this.jwtService.sign(payload, { expiresIn: '1h' }); // Токен действует 1 час
+    return this.jwtService.sign(payload, { expiresIn: '1h' });
   }
 
   // Валидация токена для сброса пароля
