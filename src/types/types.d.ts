@@ -4,6 +4,14 @@ interface AuthenticatedUser extends User {
   success?: string;
 }
 
+export type Profile = {
+  id?: string;
+  name?: string;
+  email?: string;
+  image?: string | null;
+  role?: Role;
+};
+
 type CreateSupplierCmd = {
   name: string;
   email: string;

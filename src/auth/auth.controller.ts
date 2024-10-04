@@ -27,7 +27,7 @@ export class AuthController {
 
   @UseGuards(AuthGuard('local'))
   @Post('login')
-  async login(@Request() req, @Body() body: { code?: string }) {
+  async login(@Request() req) {
     const user = req.user;
 
     // Если email не подтверждён, возвращаем ошибку

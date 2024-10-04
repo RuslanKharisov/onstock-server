@@ -217,12 +217,13 @@ export class AuthService {
 
     const { sub: userId } = payload;
 
-    // Хэширование нового пароля
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
-
-    // Обновление пароля в базе данных
-    await this.usersService.updateUserPasword(userId, hashedPassword);
-
-    return { success: 'Пароль успешно изменён' };
+    try {
+      // Обновление пароля в базе данных
+      this.usersService.updateUserPassword(userId, newPassword);
+      return { success: 'Пароль успешно изменён' };
+    } catch (error) {
+      console.error(error);
+      return { error: 'Ошибка при изменении пароля' };
+    }
   }
 }

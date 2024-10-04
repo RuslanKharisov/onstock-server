@@ -1,6 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { User } from '@prisma/client';
+import { Profile } from 'src/types/types';
+import * as bcrypt from 'bcryptjs';
 
 export type Role = 'ADMIN' | 'SUPPLIER' | 'USER';
 
@@ -41,6 +43,18 @@ export class UsersService {
     }
   }
 
+  async updateUser(
+    values: Partial<Profile>,
+    userId: string,
+  ): Promise<User | null> {
+    return await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        ...values,
+      },
+    });
+  }
+
   async updateUserEmail(id: string, email: string) {
     return this.prisma.user.update({
       where: { id: id },
@@ -51,12 +65,22 @@ export class UsersService {
     });
   }
 
-  async updateUserPasword(userId: string, newPassword: string): Promise<void> {
-    await this.prisma.user.update({
-      where: { id: userId },
-      data: {
-        password: newPassword,
-      },
-    });
+  async updateUserPassword(
+    userId: string,
+    newPassword: string,
+  ): Promise<{ success?: string; error?: string }> {
+    try {
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+      await this.prisma.user.update({
+        where: { id: userId },
+        data: {
+          password: hashedPassword,
+        },
+      });
+      return { success: 'Пароль успешно изменен' };
+    } catch (error) {
+      console.error('Error creating supplier:', error.message);
+      return { error: 'Ошибка при изменении пароля' };
+    }
   }
 }

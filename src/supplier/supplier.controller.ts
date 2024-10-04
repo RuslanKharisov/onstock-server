@@ -13,6 +13,7 @@ import { SupplierService } from './supplier.service';
 import { Supplier } from '@prisma/client';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { Request } from 'express';
+import { CreateSupplierCmd, JwtPayload } from 'src/types/types';
 
 @Controller('supplier')
 @UseGuards(JwtAuthGuard)
@@ -36,7 +37,6 @@ export class SupplierController {
 
   @Patch()
   async updateSupplier(
-    // @Param('id') id: string,
     @Body() values: Partial<Supplier>,
     @Req() req: Request & { user: JwtPayload },
   ) {

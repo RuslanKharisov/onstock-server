@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Supplier } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { CreateSupplierCmd } from 'src/types/types';
 
 @Injectable()
 export class SupplierService {
