@@ -3,6 +3,7 @@ import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { UsersService } from './users.service';
 import { Request } from 'express';
 import { JwtPayload, Profile } from 'src/types/types';
+import * as bcrypt from 'bcryptjs';
 
 @Controller('user')
 @UseGuards(JwtAuthGuard)
@@ -20,11 +21,17 @@ export class UsersController {
 
   @Patch('/update-password')
   async updatePassword(
-    @Body('newPassword') newPassword: string,
+    @Body() values: { oldPassword: string; newPassword: string },
     @Req() req: Request & { user: JwtPayload },
   ) {
-    // to do : настроить получение текущего пароля и проверку его на совпадение перед отправкой на измененеие,
     const userId = req.user.userId;
+    const { newPassword, oldPassword } = values;
+    const user = await this.usersService.findOneById(userId);
+
+    const isPasswordValid = await bcrypt.compare(oldPassword, user.password);
+    if (!isPasswordValid) {
+      return { message: 'Старый пароль указан не верно' };
+    }
     const result = await this.usersService.updateUserPassword(
       userId,
       newPassword,
