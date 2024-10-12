@@ -15,6 +15,7 @@ import { TwoFactorConfirmationService } from './two-factor-confirmation.service'
 import { TwoFactorTokenService } from './two-factor-token.service';
 import { PrismaModule } from 'src/prisma/prisma.module';
 import { JwtStrategy } from './jwt.strategy';
+import { RefreshTokenStrategy } from './jwt-refresh.strategy';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { JwtStrategy } from './jwt.strategy';
     AuthService,
     LocalStrategy,
     JwtStrategy,
+    RefreshTokenStrategy,
     JwtTokenService,
     MailService,
     TwoFactorConfirmationService,

@@ -1,51 +1,75 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { JwtTokenService } from '../jwt/jwt.service';
+import { JwtService } from '@nestjs/jwt';
+import { User } from '@prisma/client';
 
 @Injectable()
 export class SessionService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwtTokenService: JwtTokenService,
+    private jwtService: JwtService,
   ) {}
 
-  async createSession(userId: string, email: string): Promise<string> {
-    const sessionToken = await this.jwtTokenService.generateSessionToken(
-      userId,
-      email,
-    );
-    const expires = new Date(Date.now() + 1000 * 60 * 60 * 24 * 7); // Сессия истекает через 7 дней
+  async createSession(user: User) {
+    const payload = { sub: user.id, username: user.name };
 
-    await this.prisma.session.create({
-      data: {
-        sessionToken,
-        userId,
-        expires,
+    return {
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        picture: user.image,
+        role: user.role,
       },
-    });
-    return sessionToken;
+      backendTokens: {
+        accessToken: await this.jwtService.signAsync(payload, {
+          expiresIn: '1h',
+          secret: process.env.JWT_SECRET,
+        }),
+        refreshToken: await this.jwtService.signAsync(payload, {
+          expiresIn: '7d',
+          secret: process.env.JWT_REFRESH_SECRET,
+        }),
+      },
+    };
   }
 
-  async findSession(token: string) {
+  async refreshSession(user: any) {
+    const payload = { sub: user.sub, name: user.username };
+    return {
+      accessToken: await this.jwtService.signAsync(payload, {
+        expiresIn: '1h',
+        secret: process.env.JWT_SECRET,
+      }),
+      refreshToken: await this.jwtService.signAsync(payload, {
+        expiresIn: '7d',
+        secret: process.env.JWT_REFRESH_SECRET,
+      }),
+    };
+  }
+
+  async findSessionByToken(token: string) {
     return this.prisma.session.findUnique({
-      where: { sessionToken: token },
+      where: { accessToken: token },
     });
   }
 
-  async findSessionByUserId(userId: string) {
-    return this.prisma.session.findFirst({
-      where: {
-        userId: userId,
-        expires: {
-          gte: new Date(), // Находим сессию, срок действия которой еще не истек
-        },
-      },
-    });
-  }
+  // async findSessionByUserId(userId: string) {
+  //   return this.prisma.session.findFirst({
+  //     where: {
+  //       userId: userId,
+  //       expires: {
+  //         gte: new Date(), // Находим сессию, срок действия которой еще не истек
+  //       },
+  //     },
+  //   });
+  // }
 
   async deleteSession(token: string) {
     return this.prisma.session.delete({
-      where: { sessionToken: token },
+      where: { accessToken: token },
     });
   }
 }

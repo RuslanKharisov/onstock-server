@@ -19,12 +19,12 @@ export class VerificationTokenService {
 
   async findToken(token: string) {
     return this.prisma.verificationToken.findUnique({
-      where: { token },
+      where: { token: token },
     });
   }
 
   async deleteToken(token: string) {
-    return this.prisma.verificationToken.delete({
+    this.prisma.verificationToken.delete({
       where: { token },
     });
   }

@@ -16,12 +16,14 @@ export class JwtTokenService {
   }
 
   // Генерация токена для сессии пользователя
-  async generateSessionToken(userId: string, email: string): Promise<string> {
-    const payload = { sub: userId, email };
-    const secret = this.configService.get<string>('JWT_SECRET'); // .env
-    const expiresIn = '7d';
-    return this.jwtService.sign(payload, { secret, expiresIn });
-  }
+  // async generateAccessToken(userId: string, email: string): Promise<string> {
+  //   const payload = { sub: userId, email };
+
+  //   return this.jwtService.sign(payload, {
+  //     secret: process.env.JWT_SECRET,
+  //     expiresIn: '1h',
+  //   });
+  // }
 
   // Генерация токена для сброса пароля
   async generateResetToken(userId: string, email: string): Promise<string> {
@@ -29,8 +31,8 @@ export class JwtTokenService {
     return this.jwtService.sign(payload, { expiresIn: '1h' });
   }
 
-  // Валидация токена для сброса пароля
-  async verifyResetToken(token: string): Promise<any> {
+  // Валидация токена
+  async verifyToken(token: string): Promise<any> {
     try {
       return this.jwtService.verify(token);
     } catch (error) {

@@ -5,12 +5,16 @@ import {
   Request,
   Body,
   Query,
+  UnauthorizedException,
+  Req,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { VerificationTokenService } from './verificationToken/verification-token.service';
 import { UsersService } from 'src/users/users.service';
+import { JwtRefreshGuard } from './jwt-refresh.guard';
+import { SessionService } from './session/session.service';
 
 @Controller('auth')
 export class AuthController {
@@ -18,11 +22,12 @@ export class AuthController {
     private authService: AuthService,
     private readonly verificationTokenService: VerificationTokenService,
     private usersService: UsersService,
+    private readonly sessionService: SessionService,
   ) {}
 
   @Post('register')
-  async register(@Body() registerDto: RegisterDto) {
-    return this.authService.register(registerDto);
+  async register(@Body() dto: RegisterDto) {
+    return this.authService.register(dto);
   }
 
   @UseGuards(AuthGuard('local'))
@@ -37,48 +42,31 @@ export class AuthController {
 
     // Если двухфакторная аутентификация требуется
     if (user.twoFactor) {
-      return { twoFactor: true, success: user.success };
+      return {
+        twoFactor: true,
+        success: 'Двухфакторная аутентификация требуется',
+      };
     }
 
     // Если все проверки пройдены, создаём сессию
-    return this.authService.login(req.user);
+    const session = await this.authService.login(req.user);
+    console.log('🚀 ~ AuthController ~ login ~ session:', session);
+    return { success: 'Вход выполнен успешно', ...session };
+  }
+
+  @UseGuards(JwtRefreshGuard)
+  @Post('refresh')
+  async refreshToken(@Request() req) {
+    const { user } = req.user;
+
+    return await this.sessionService.refreshSession(user);
   }
 
   @Post('verify-email')
   async verifyEmail(
     @Query('token') token: string,
   ): Promise<{ success?: string; error?: string }> {
-    const existingToken = await this.verificationTokenService.findToken(token);
-
-    if (!existingToken) {
-      return { error: 'Токен недействителен или истек' };
-    }
-
-    // Проверяем, не истек ли токен
-    if (new Date() > existingToken.expires) {
-      await this.verificationTokenService.deleteToken(token); // Удаляем истекший токен
-      return { error: 'Токен истек' };
-    }
-
-    // Подтверждаем email
-    const existingUser = await this.usersService.findOneByEmail(
-      existingToken.email,
-    );
-
-    if (!existingUser) {
-      return { error: 'Email does not exist!' };
-    }
-
-    // Обновляем данные пользователя
-    await this.usersService.updateUserEmail(
-      existingUser.id,
-      existingToken.email,
-    );
-
-    // Удаляем токен после успешной верификации
-    await this.verificationTokenService.deleteToken(token);
-
-    return { success: 'Email успешно подтвержден' };
+    return this.authService.verifyEmailByToken(token);
   }
 
   @Post('reset-password')
@@ -92,5 +80,18 @@ export class AuthController {
     @Body('newPassword') newPassword: string,
   ) {
     return this.authService.resetPassword(token, newPassword);
+  }
+
+  @Post('verify-session')
+  async verifySession(@Req() req: Request) {
+    const authHeader = req.headers['authorization'];
+    // Извлечение токена из заголовка
+    const sessionToken = authHeader && authHeader.split(' ')[1];
+
+    const isValid = await this.authService.verifySession(sessionToken);
+    if (!isValid) {
+      throw new UnauthorizedException('Сессия недействительна');
+    }
+    return { success: true };
   }
 }

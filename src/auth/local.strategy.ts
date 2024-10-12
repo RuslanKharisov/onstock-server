@@ -2,21 +2,21 @@ import { Strategy } from 'passport-local';
 import { PassportStrategy } from '@nestjs/passport';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { AuthService } from './auth.service';
+import { User } from '@prisma/client';
 
 @Injectable()
 export class LocalStrategy extends PassportStrategy(Strategy) {
   constructor(private authService: AuthService) {
     super({
-      usernameField: 'email', // Используем email вместо username
-      passwordField: 'password', // Пароль
-      passReqToCallback: true, // Чтобы получить доступ к request
+      usernameField: 'email',
+      passwordField: 'password',
+      passReqToCallback: true,
     });
   }
 
-  async validate(req: any, email: string, password: string): Promise<any> {
-    const code = req.body.code; // Получаем код из тела запроса
+  async validate(req: any, email: string, password: string): Promise<User> {
+    const code = req.body.code;
 
-    // Валидируем пользователя и код 2FA
     const user = await this.authService.validateUser(email, password, code);
 
     if (!user || user.error) {
@@ -25,6 +25,6 @@ export class LocalStrategy extends PassportStrategy(Strategy) {
       );
     }
 
-    return user; // Возвращаем пользователя, если все проверки пройдены
+    return user;
   }
 }

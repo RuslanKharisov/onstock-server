@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import * as bcrypt from 'bcryptjs';
 import { User } from '@prisma/client';
 import { RegisterDto } from './dto/register.dto';
@@ -16,7 +20,7 @@ export class AuthService {
     private readonly usersService: UsersService,
     private readonly jwtTokenService: JwtTokenService,
     private readonly mailService: MailService,
-    private readonly sessionServise: SessionService,
+    private readonly sessionService: SessionService,
     private readonly verificationTokenService: VerificationTokenService,
     private twoFactorTokenService: TwoFactorTokenService,
     private twoFactorConfirmationService: TwoFactorConfirmationService,
@@ -24,13 +28,13 @@ export class AuthService {
 
   /** Регистрация пользователя */
   async register(
-    registerDto: RegisterDto,
+    dto: RegisterDto,
   ): Promise<{ success?: string; error?: string }> {
-    const { name, email, password } = registerDto;
+    const { name, email, password } = dto;
 
     const existingUser = await this.usersService.findOneByEmail(email);
     if (existingUser) {
-      return { error: 'Указанный почтовый адрес уже используется!' };
+      return { error: 'ВНИМАНИЕ: Адрес уже зарегистрирован!' };
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -43,14 +47,24 @@ export class AuthService {
     const verificationToken =
       await this.jwtTokenService.generateVerificationToken(email);
 
+    const existingToken = await this.verificationTokenService.findToken(email);
+
+    if (existingToken) {
+      // Валидация токена
+      const payload = await this.jwtTokenService.verifyToken(existingToken.id);
+      if (!payload) {
+        await this.verificationTokenService.deleteToken(existingToken.token);
+      }
+    }
+
     // Сохранение токена в базу данных
     await this.verificationTokenService.createToken({
       token: verificationToken,
       email,
-      expires: new Date(Date.now() + 1000 * 60 * 60 * 24), // токен истекает через 24 часа
+      expires: new Date(Date.now() + 1000 * 60 * 60 * 1), // токен истекает через 24 часа
     });
 
-    const confirmLink = `${process.env.RESEND_CONFIRM_URL}/verify-email?token=${verificationToken}`;
+    const confirmLink = `${process.env.RESEND_CONFIRM_URL}/new-verification?token=${verificationToken}`;
 
     await this.mailService.sendEmailConfifirmationLink(
       newUser.email,
@@ -62,14 +76,53 @@ export class AuthService {
     };
   }
 
+  /* Верификация почты */
+
+  async verifyEmailByToken(
+    token: string,
+  ): Promise<{ success?: string; error?: string }> {
+    console.log('🚀 ~ AuthService ~ token:', token);
+    const existingToken = await this.verificationTokenService.findToken(token);
+    console.log('🚀 ~ AuthService ~ existingToken:', existingToken);
+    if (!existingToken) {
+      console.log('🚀 ~ AuthService ~ Токен недействителен или истек:');
+      return { error: 'Токен недействителен или истек' };
+    }
+    // Валидация токена
+    const payload = await this.jwtTokenService.verifyToken(token);
+    if (!payload) {
+      return { error: 'Токен недействителен или истек' };
+    }
+
+    // Подтверждаем email
+    const existingUser = await this.usersService.findOneByEmail(
+      existingToken.email,
+    );
+
+    if (!existingUser) {
+      return { error: 'Email не найден' };
+    }
+
+    // Обновляем данные пользователя
+    await this.usersService.updateUserEmail(
+      existingUser.id,
+      existingToken.email,
+    );
+
+    // Удаляем токен после успешной верификации
+    await this.verificationTokenService.deleteToken(token);
+
+    return { success: 'Email успешно подтвержден' };
+  }
+
   /*  Проверка пароля при логине  */
   async validateUser(
     email: string,
     password: string,
     code?: string,
   ): Promise<any> {
+    console.log('🚀 ~ AuthService ~ code:', code);
     const user = await this.usersService.findOneByEmail(email);
-    console.log(code);
     if (!user) {
       return { error: 'Пользователь с данным Email не зарегистрирован' };
     }
@@ -147,37 +200,31 @@ export class AuthService {
     /* Проверяем пароль */
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
-      return null; // Если пароль неверный
+      return new UnauthorizedException();
     }
     return user;
   }
 
   /* Логика логина и создания сессии */
-  async login(user: User): Promise<{ sessionToken: string }> {
+  async login(user: User) {
     // Поиск существующей сессии для данного пользователя
-    const existingSession = await this.sessionServise.findSessionByUserId(
-      user.id,
-    );
+    // const existingSession = await this.sessionService.findSessionByUserId(
+    //   user.id,
+    // );
 
-    if (existingSession) {
-      // Если сессия существует, проверяем срок её действия
-      if (new Date(existingSession.expires) > new Date()) {
-        // Если сессия еще действительна, возвращаем её
-        return { sessionToken: existingSession.sessionToken };
-      } else {
-        // Если сессия истекла, удаляем её
-        await this.sessionServise.deleteSession(existingSession.sessionToken);
-      }
-    }
+    // if (existingSession) {
+    //   // Если сессия существует, проверяем срок её действия
+    //   if (this.) {
+    //     // Если сессия еще действительна, возвращаем её
+    //     return { sessionToken: existingSession.sessionToken };
+    //   } else {
+    //     // Если сессия истекла, удаляем её
+    //     await this.sessionService.deleteSession(existingSession.sessionToken);
+    //   }
+    // }
     // Создание новой сессии
-    const sessionToken = await this.sessionServise.createSession(
-      user.id,
-      user.email,
-    );
 
-    return {
-      sessionToken, // Возвращаем токен сессии на клиент
-    };
+    return await this.sessionService.createSession(user);
   }
 
   /* Логика для отправки ссылки на сброс пароля */
@@ -210,7 +257,7 @@ export class AuthService {
     newPassword: string,
   ): Promise<{ success?: string; error?: string }> {
     // Валидация токена
-    const payload = await this.jwtTokenService.verifyResetToken(token);
+    const payload = await this.jwtTokenService.verifyToken(token);
     if (!payload) {
       return { error: 'Неверный или просроченный токен' };
     }
@@ -225,5 +272,14 @@ export class AuthService {
       console.error(error);
       return { error: 'Ошибка при изменении пароля' };
     }
+  }
+
+  async verifySession(sessionToken: string): Promise<boolean> {
+    const session = await this.sessionService.findSessionByToken(sessionToken);
+    const tokenIsValid = this.jwtTokenService.verifyToken(session.accessToken);
+    if (!tokenIsValid) {
+      return false;
+    }
+    return true;
   }
 }

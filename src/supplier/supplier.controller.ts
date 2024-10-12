@@ -21,6 +21,7 @@ export class SupplierController {
   constructor(private supplierService: SupplierService) {}
 
   @Post()
+  @UseGuards(JwtAuthGuard)
   async createSupplier(
     @Body() values: CreateSupplierCmd,
     @Req() req: Request & { user: JwtPayload },
