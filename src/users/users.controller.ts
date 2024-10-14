@@ -30,6 +30,7 @@ export class UsersController {
   @UseGuards(JwtAuthGuard)
   @Get(':id')
   async getUserProfile(@Param('id') id: string) {
+    console.log('🚀 ~ UsersController ~ getUserProfile ~ id:', id);
     return await this.usersService.findOneById(id);
   }
 

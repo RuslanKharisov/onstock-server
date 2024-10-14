@@ -3,7 +3,7 @@ import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
 export class VerificationTokenService {
-  constructor(private readonly prisma: PrismaService) {} // предполагается использование Prisma
+  constructor(private readonly prisma: PrismaService) {}
 
   async createToken(data: { token: string; email: string; expires: Date }) {
     // Удаление старого токена, если он существует

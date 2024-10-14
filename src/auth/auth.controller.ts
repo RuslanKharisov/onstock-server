@@ -34,6 +34,7 @@ export class AuthController {
   @Post('login')
   async login(@Request() req) {
     const user = req.user;
+    console.log('🚀 ~ AuthController ~ login ~ user:', user);
 
     // Если email не подтверждён, возвращаем ошибку
     if (user.error) {
@@ -50,16 +51,16 @@ export class AuthController {
 
     // Если все проверки пройдены, создаём сессию
     const session = await this.authService.login(req.user);
-    console.log('🚀 ~ AuthController ~ login ~ session:', session);
-    return { success: 'Вход выполнен успешно', ...session };
+    // console.log('🚀 ~ AuthController ~ login ~ session:', session);
+    return { ...session };
   }
 
   @UseGuards(JwtRefreshGuard)
   @Post('refresh')
   async refreshToken(@Request() req) {
-    const { user } = req.user;
-
-    return await this.sessionService.refreshSession(user);
+    const refresh = await this.sessionService.refreshSession(req.user);
+    console.log('🚀 ~ AuthController ~ refreshToken ~ refresh:', refresh);
+    return { ...refresh };
   }
 
   @Post('verify-email')

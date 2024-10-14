@@ -20,6 +20,7 @@ export class RefreshTokenStrategy extends PassportStrategy(
 
   async validate(req: Request, payload: any) {
     const refreshToken = req.get('Authorization').replace('Refresh ', ''); // Извлекаем refresh токен из заголовка
+    console.log('🚀 ~ validate ~ refreshToken:', refreshToken);
     if (!payload || !refreshToken) {
       throw new UnauthorizedException();
     }
