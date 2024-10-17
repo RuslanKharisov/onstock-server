@@ -26,7 +26,7 @@ export class SupplierController {
     @Body() values: CreateSupplierCmd,
     @Req() req: Request & { user: JwtPayload },
   ) {
-    const userId = req.user.userId;
+    const userId = req.user.sub;
     console.log('🚀 ~ SupplierController ~ userId:', userId);
     const result = await this.supplierService.createSupplier(values, userId);
     if (result.success) {
@@ -41,7 +41,7 @@ export class SupplierController {
     @Body() values: Partial<Supplier>,
     @Req() req: Request & { user: JwtPayload },
   ) {
-    const userId = req.user.userId;
+    const userId = req.user.sub;
     return await this.supplierService.updateSupplierByUser(values, userId);
   }
 
@@ -63,7 +63,7 @@ export class SupplierController {
 
   @Delete()
   async deleteSupplier(@Req() req: Request & { user: JwtPayload }) {
-    const userId = req.user.userId;
+    const userId = req.user.sub;
     console.log('🚀 ~ SupplierController ~ deleteSupplier ~ userId:', userId);
     const result = await this.supplierService.deleteSupplier(userId);
 

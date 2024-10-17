@@ -19,6 +19,8 @@ type CreateSupplierCmd = {
 };
 
 interface JwtPayload {
-  userId: string;
-  username: string;
+  sub: string;
+  name: string;
+  iat: Date;
+  exp: Date;
 }

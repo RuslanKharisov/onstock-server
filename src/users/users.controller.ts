@@ -23,7 +23,8 @@ export class UsersController {
     @Body() values: Partial<Profile>,
     @Req() req: Request & { user: JwtPayload },
   ) {
-    const userId = req.user.userId;
+    const userId = req.user.sub;
+    console.log('🚀 ~ UsersController ~ req:', req.user);
     return await this.usersService.updateUser(values, userId);
   }
 
@@ -39,7 +40,7 @@ export class UsersController {
     @Body() values: { oldPassword: string; newPassword: string },
     @Req() req: Request & { user: JwtPayload },
   ) {
-    const userId = req.user.userId;
+    const userId = req.user.sub;
     const { newPassword, oldPassword } = values;
     const user = await this.usersService.findOneById(userId);
 
