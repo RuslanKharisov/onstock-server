@@ -20,12 +20,12 @@ export class RefreshTokenStrategy extends PassportStrategy(
 
   async validate(req: Request, payload: any) {
     const refreshToken = req.get('Authorization').replace('Refresh ', ''); // Извлекаем refresh токен из заголовка
-    console.log('🚀 ~ validate ~ refreshToken:', refreshToken);
-    if (!payload || !refreshToken) {
+
+    if (!payload.sub || !refreshToken) {
       throw new UnauthorizedException();
     }
 
     // Возвращаем данные пользователя и сам токен, если потребуется для дальнейших операций
-    return { user: payload };
+    return { ...payload };
   }
 }

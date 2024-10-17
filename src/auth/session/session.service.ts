@@ -25,11 +25,11 @@ export class SessionService {
       },
       backendTokens: {
         accessToken: await this.jwtService.signAsync(payload, {
-          expiresIn: '1h',
+          expiresIn: '5m',
           secret: process.env.JWT_SECRET,
         }),
         refreshToken: await this.jwtService.signAsync(payload, {
-          expiresIn: '7d',
+          expiresIn: '10m',
           secret: process.env.JWT_REFRESH_SECRET,
         }),
       },
@@ -40,11 +40,11 @@ export class SessionService {
     const payload = { sub: user.sub, name: user.username };
     return {
       accessToken: await this.jwtService.signAsync(payload, {
-        expiresIn: '1h',
+        expiresIn: '5m',
         secret: process.env.JWT_SECRET,
       }),
       refreshToken: await this.jwtService.signAsync(payload, {
-        expiresIn: '7d',
+        expiresIn: '10m',
         secret: process.env.JWT_REFRESH_SECRET,
       }),
     };

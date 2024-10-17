@@ -227,6 +227,10 @@ export class AuthService {
     return await this.sessionService.createSession(user);
   }
 
+  // async refreshToken(user: User) {
+
+  // }
+
   /* Логика для отправки ссылки на сброс пароля */
   async sendResetPasswordLink(
     email: string,
