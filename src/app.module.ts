@@ -7,6 +7,7 @@ import { UsersController } from './users/users.controller';
 import { AuthModule } from './auth/auth.module';
 import { SupplierModule } from './supplier/supplier.module';
 import { ConfigModule } from '@nestjs/config';
+import { TariffModule } from './tariff/tariff.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { ConfigModule } from '@nestjs/config';
     UsersModule,
     SupplierModule,
     ConfigModule.forRoot({ isGlobal: true }),
+    TariffModule,
   ],
   controllers: [AppController, UsersController],
   providers: [AppService],

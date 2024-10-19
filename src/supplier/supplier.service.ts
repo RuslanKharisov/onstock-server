@@ -1,11 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import { Supplier } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { TariffService } from 'src/tariff/tariff.service';
 import { CreateSupplierCmd } from 'src/types/types';
 
 @Injectable()
 export class SupplierService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private tariffService: TariffService,
+  ) {}
 
   async createSupplier(values: CreateSupplierCmd, userId: string) {
     try {
@@ -79,9 +83,13 @@ export class SupplierService {
   }
 
   async getSupplierByUserId(userId: string) {
-    return await this.prisma.supplier.findUnique({
+    const existingSupplier = await this.prisma.supplier.findUnique({
       where: { userId },
     });
+    const supplierTariff = await this.tariffService.findOne(
+      existingSupplier.tariffId,
+    );
+    return { ...existingSupplier, supplierTariff };
   }
 
   async updateSupplierTariff(supplierId: number, newTariffName: string) {

@@ -3,7 +3,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { User } from '@prisma/client';
 import { Profile } from 'src/types/types';
 import * as bcrypt from 'bcryptjs';
-import { createUserDto } from './dto/user.dto';
+import { CreateUserDto } from './dto/user.dto';
 
 export type Role = 'ADMIN' | 'SUPPLIER' | 'USER';
 
@@ -11,7 +11,7 @@ export type Role = 'ADMIN' | 'SUPPLIER' | 'USER';
 export class UsersService {
   constructor(private prisma: PrismaService) {}
 
-  async createUser(data: createUserDto): Promise<User> {
+  async createUser(data: CreateUserDto): Promise<User> {
     const newUser = await this.prisma.user.create({
       data: {
         ...data,
