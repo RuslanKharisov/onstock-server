@@ -15,7 +15,9 @@ import { VerificationTokenService } from './verificationToken/verification-token
 import { UsersService } from 'src/users/users.service';
 import { JwtRefreshGuard } from './jwt-refresh.guard';
 import { SessionService } from './session/session.service';
+import { ApiTags } from '@nestjs/swagger';
 
+@ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
   constructor(
@@ -51,7 +53,6 @@ export class AuthController {
 
     // Если все проверки пройдены, создаём сессию
     const session = await this.authService.login(req.user);
-    // console.log('🚀 ~ AuthController ~ login ~ session:', session);
     return { ...session };
   }
 

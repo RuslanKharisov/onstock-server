@@ -16,12 +16,20 @@ model Stock {
   quantity   Int
 }
 
+model Category {
+  id       Int       @id @default(autoincrement())
+  name     String    @unique
+  products Product[] // Связь один-ко-многим с продуктами
+}
+
 model Product {
   id          String  @id @default(cuid())
   sku         String  @unique
   name        String
   description String
   Stock       Stock[]
+  categoryId  Int?      // Внешний ключ для категории, может быть null, если категория необязательна
+  category    Category? @relation(fields: [categoryId], references: [id])
 }
 
 model Account {

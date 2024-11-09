@@ -12,7 +12,9 @@ import { UsersService } from './users.service';
 import { Request } from 'express';
 import { JwtPayload, Profile } from 'src/types/types';
 import * as bcrypt from 'bcryptjs';
+import { ApiTags } from '@nestjs/swagger';
 
+@ApiTags('User')
 @Controller('user')
 @UseGuards(JwtAuthGuard)
 export class UsersController {

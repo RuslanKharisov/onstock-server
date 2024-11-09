@@ -85,7 +85,9 @@ export class SupplierService {
   async getSupplierByUserId(userId: string) {
     const existingSupplier = await this.prisma.supplier.findUnique({
       where: { userId },
+      include: { tariff: true, subscriptions: true },
     });
+    if (!existingSupplier) return null;
     const supplierTariff = await this.tariffService.findOne(
       existingSupplier.tariffId,
     );

@@ -8,6 +8,9 @@ import { AuthModule } from './auth/auth.module';
 import { SupplierModule } from './supplier/supplier.module';
 import { ConfigModule } from '@nestjs/config';
 import { TariffModule } from './tariff/tariff.module';
+import { ProductModule } from './product/product.module';
+import { StockModule } from './stock/stock.module';
+import { ProductManagementModule } from './product-management/product-management.module';
 
 @Module({
   imports: [
@@ -17,6 +20,9 @@ import { TariffModule } from './tariff/tariff.module';
     SupplierModule,
     ConfigModule.forRoot({ isGlobal: true }),
     TariffModule,
+    ProductModule,
+    StockModule,
+    ProductManagementModule,
   ],
   controllers: [AppController, UsersController],
   providers: [AppService],

@@ -14,7 +14,9 @@ import { Supplier } from '@prisma/client';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { Request } from 'express';
 import { CreateSupplierCmd, JwtPayload } from 'src/types/types';
+import { ApiTags } from '@nestjs/swagger';
 
+@ApiTags('Supplier')
 @Controller('supplier')
 @UseGuards(JwtAuthGuard)
 export class SupplierController {
@@ -64,9 +66,7 @@ export class SupplierController {
   @Delete()
   async deleteSupplier(@Req() req: Request & { user: JwtPayload }) {
     const userId = req.user.sub;
-    console.log('🚀 ~ SupplierController ~ deleteSupplier ~ userId:', userId);
     const result = await this.supplierService.deleteSupplier(userId);
-
     if (result.success) {
       return { message: result.message };
     } else {
