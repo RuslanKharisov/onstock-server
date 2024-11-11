@@ -5,6 +5,8 @@ import {
   Delete,
   UseGuards,
   Query,
+  Post,
+  Body,
 } from '@nestjs/common';
 import { StockService } from './stock.service';
 // import { CreateStockDto } from './dto/create-stock.dto';
@@ -26,16 +28,18 @@ export class StockController {
   async findAll(
     @Query('page') page: number = 1,
     @Query('perPage') perPage: number = 10,
-    // @Query('categoryId') categoryId?: number,
-    // @Query('productId') productId?: string,
   ) {
     return await this.stockService.findAll(page, perPage);
   }
 
   @UseGuards(JwtAuthGuard)
-  @Get(':id')
-  async findOne(@Param('id') id: string) {
-    return await this.stockService.findOne(id);
+  @Post(':id')
+  async findOne(
+    @Param('id') id: string,
+    @Body('page') page: number = 1,
+    @Body('perPage') perPage: number = 10,
+  ) {
+    return await this.stockService.findOne(page, perPage, id);
   }
 
   // @Patch(':id')

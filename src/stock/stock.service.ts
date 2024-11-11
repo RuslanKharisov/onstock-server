@@ -14,13 +14,13 @@ export class StockService {
   //   return 'This action adds a new stock';
   // }
 
-  /* Возвращает все существующие склады */
+  /** Возвращает все существующие склады */
   async findAll(
     page: number,
     perPage: number,
-    // categoryId?: number;
-    // productId?: string;
   ): Promise<PaginatedOutputDto<StockListElementWithRelations>> {
+    console.log('🚀 ~ StockService ~ perPage:', perPage);
+    console.log('🚀 ~ StockService ~ page:', page);
     {
       const paginate = createPaginator({ perPage });
       return paginate(
@@ -31,8 +31,9 @@ export class StockService {
             product: true,
             supplier: true,
           },
+          /** Сортировка. Количество по убыванию. */
           orderBy: {
-            id: 'desc',
+            quantity: 'desc',
           },
         },
         {
@@ -43,29 +44,37 @@ export class StockService {
   }
 
   /* Возвращает склад принадлежащий поставщику */
-  async findOne(id: string) {
+  async findOne(
+    page: number,
+    perPage: number,
+    id: string,
+  ): Promise<PaginatedOutputDto<StockListElementWithRelations>> {
     const supplier = await this.prisma.supplier.findUnique({
       where: {
         userId: id,
       },
     });
     if (supplier) {
-      try {
-        const stocks = await this.prisma.stock.findMany({
-          where: {
-            supplierId: supplier?.id,
+      {
+        const paginate = createPaginator({ perPage });
+        return paginate(
+          this.prisma.stock,
+          {
+            where: { supplierId: supplier.id },
+            include: {
+              product: true,
+              supplier: true,
+            },
+            /** Сортировка. Количество по убыванию. */
+            orderBy: {
+              quantity: 'desc',
+            },
           },
-          include: {
-            product: true,
-            supplier: true,
+          {
+            page,
           },
-        });
-        return stocks;
-      } finally {
-        await this.prisma.$disconnect();
+        );
       }
-    } else {
-      return [];
     }
   }
 
@@ -85,3 +94,16 @@ export class StockService {
     }
   }
 }
+
+// if (supplier) {
+//     const stocks = await this.prisma.stock.findMany({
+//       where: {
+//         supplierId: supplier?.id,
+//       },
+//       include: {
+//         product: true,
+//         supplier: true,
+//       },
+//     });
+//     return stocks;
+//   }
