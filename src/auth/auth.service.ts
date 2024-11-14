@@ -13,6 +13,7 @@ import { VerificationTokenService } from './verificationToken/verification-token
 import { SessionService } from './session/session.service';
 import { TwoFactorTokenService } from './two-factor-token.service';
 import { TwoFactorConfirmationService } from './two-factor-confirmation.service';
+import { RegisterOauthDto } from './dto/register-oauth.dto';
 
 @Injectable()
 export class AuthService {
@@ -30,7 +31,7 @@ export class AuthService {
   async register(
     dto: RegisterDto,
   ): Promise<{ success?: string; error?: string }> {
-    const { name, email, password } = dto;
+    const { name, email, password, type } = dto;
 
     const existingUser = await this.usersService.findOneByEmail(email);
     if (existingUser) {
@@ -42,6 +43,7 @@ export class AuthService {
       name,
       email,
       password: hashedPassword,
+      type,
     });
 
     const verificationToken =
@@ -67,7 +69,7 @@ export class AuthService {
     const confirmLink = `${process.env.RESEND_CONFIRM_URL}/new-verification?token=${verificationToken}`;
 
     await this.mailService.sendEmailConfifirmationLink(
-      newUser.email,
+      newUser.user.email,
       confirmLink,
     );
 
@@ -76,16 +78,24 @@ export class AuthService {
     };
   }
 
+  /** Регистрация oauth */
+  async registerOauth(dto: RegisterOauthDto) {
+    const { email } = dto;
+    const existingUser = await this.usersService.findOneByEmail(email);
+    if (existingUser) {
+      return await this.sessionService.createSession(existingUser);
+    } else {
+      this.usersService.createUser(dto);
+    }
+  }
+
   /* Верификация почты */
 
   async verifyEmailByToken(
     token: string,
   ): Promise<{ success?: string; error?: string }> {
-    console.log('🚀 ~ AuthService ~ token:', token);
     const existingToken = await this.verificationTokenService.findToken(token);
-    console.log('🚀 ~ AuthService ~ existingToken:', existingToken);
     if (!existingToken) {
-      console.log('🚀 ~ AuthService ~ Токен недействителен или истек:');
       return { error: 'Токен недействителен или истек' };
     }
     // Валидация токена
@@ -121,7 +131,6 @@ export class AuthService {
     password: string,
     code?: string,
   ): Promise<any> {
-    console.log('🚀 ~ AuthService ~ code:', code);
     const user = await this.usersService.findOneByEmail(email);
     if (!user) {
       return { error: 'Пользователь с данным Email не зарегистрирован' };
@@ -207,29 +216,8 @@ export class AuthService {
 
   /* Логика логина и создания сессии */
   async login(user: User) {
-    // Поиск существующей сессии для данного пользователя
-    // const existingSession = await this.sessionService.findSessionByUserId(
-    //   user.id,
-    // );
-
-    // if (existingSession) {
-    //   // Если сессия существует, проверяем срок её действия
-    //   if (this.) {
-    //     // Если сессия еще действительна, возвращаем её
-    //     return { sessionToken: existingSession.sessionToken };
-    //   } else {
-    //     // Если сессия истекла, удаляем её
-    //     await this.sessionService.deleteSession(existingSession.sessionToken);
-    //   }
-    // }
-    // Создание новой сессии
-
     return await this.sessionService.createSession(user);
   }
-
-  // async refreshToken(user: User) {
-
-  // }
 
   /* Логика для отправки ссылки на сброс пароля */
   async sendResetPasswordLink(

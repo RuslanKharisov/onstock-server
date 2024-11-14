@@ -4,6 +4,7 @@ import {
   Get,
   Param,
   Patch,
+  Post,
   Req,
   UseGuards,
 } from '@nestjs/common';
@@ -16,7 +17,7 @@ import { ApiTags } from '@nestjs/swagger';
 
 @ApiTags('User')
 @Controller('user')
-@UseGuards(JwtAuthGuard)
+// @UseGuards(JwtAuthGuard)
 export class UsersController {
   constructor(private usersService: UsersService) {}
 
@@ -35,6 +36,11 @@ export class UsersController {
   async getUserProfile(@Param('id') id: string) {
     console.log('🚀 ~ UsersController ~ getUserProfile ~ id:', id);
     return await this.usersService.findOneById(id);
+  }
+
+  @Post('/profile')
+  async getUserProfileByEmail(@Body('email') email: string) {
+    return await this.usersService.findOneByEmail(email);
   }
 
   @Patch('/update-password')

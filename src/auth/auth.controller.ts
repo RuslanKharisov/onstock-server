@@ -16,6 +16,7 @@ import { UsersService } from 'src/users/users.service';
 import { JwtRefreshGuard } from './jwt-refresh.guard';
 import { SessionService } from './session/session.service';
 import { ApiTags } from '@nestjs/swagger';
+import { RegisterOauthDto } from './dto/register-oauth.dto';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -32,12 +33,15 @@ export class AuthController {
     return this.authService.register(dto);
   }
 
+  @Post('oauth')
+  async registerOauth(@Body() dto: RegisterOauthDto) {
+    return this.authService.registerOauth(dto);
+  }
+
   @UseGuards(AuthGuard('local'))
   @Post('login')
   async login(@Request() req) {
     const user = req.user;
-    console.log('🚀 ~ AuthController ~ login ~ user:', user);
-
     // Если email не подтверждён, возвращаем ошибку
     if (user.error) {
       return { error: user.error };
@@ -60,7 +64,6 @@ export class AuthController {
   @Post('refresh')
   async refreshToken(@Request() req) {
     const refresh = await this.sessionService.refreshSession(req.user);
-    console.log('🚀 ~ AuthController ~ refreshToken ~ refresh:', refresh);
     return { ...refresh };
   }
 

@@ -4,20 +4,36 @@ import { User } from '@prisma/client';
 import { Profile } from 'src/types/types';
 import * as bcrypt from 'bcryptjs';
 import { CreateUserDto } from './dto/user.dto';
+import { SessionService } from 'src/auth/session/session.service';
 
 export type Role = 'ADMIN' | 'SUPPLIER' | 'USER';
 
 @Injectable()
 export class UsersService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private sessionService: SessionService,
+  ) {}
 
-  async createUser(data: CreateUserDto): Promise<User> {
+  async createUser(data: CreateUserDto) {
+    console.log('🚀 ~ UsersService ~ createUser ~ data:', data);
     const newUser = await this.prisma.user.create({
       data: {
-        ...data,
+        email: data.email,
+        name: data.name,
+        password: data.password,
+        image: data.image,
+        emailVerified: new Date(),
+        accounts: {
+          create: {
+            type: data.type, // Обязательно добавьте это поле
+            provider: data.provider,
+            providerAccountId: data.providerAccountId,
+          },
+        },
       },
     });
-    return newUser;
+    return await this.sessionService.createSession(newUser);
   }
 
   async findAll(): Promise<User[]> {
@@ -31,13 +47,12 @@ export class UsersService {
   }
 
   async findOneByEmail(email: string): Promise<User | null> {
-    try {
-      return this.prisma.user.findUnique({
-        where: { email },
-      });
-    } catch {
+    const user = await this.prisma.user.findUnique({
+      where: { email },
+    });
+    if (!user) {
       return null;
-    }
+    } else return user;
   }
 
   async updateUser(
