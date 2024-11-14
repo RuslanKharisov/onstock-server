@@ -50,15 +50,6 @@ model Account {
 
   @@unique([provider, providerAccountId])
 }
-
-model Session {
-  id           String   @id @default(cuid())
-  accessToken String   @unique
-  refreshToken String   @unique
-  userId       String
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
-
 model User {
   id                      String                 @id @default(cuid())
   email                   String                 @unique
@@ -76,6 +67,15 @@ model User {
 
   @@map("users")
 }
+
+model Session {
+  id           String   @id @default(cuid())
+  accessToken String   @unique
+  refreshToken String   @unique
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
 
 model VerificationToken {
   id      String   @id @default(cuid())

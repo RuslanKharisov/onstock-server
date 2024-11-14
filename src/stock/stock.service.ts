@@ -19,8 +19,6 @@ export class StockService {
     page: number,
     perPage: number,
   ): Promise<PaginatedOutputDto<StockListElementWithRelations>> {
-    console.log('🚀 ~ StockService ~ perPage:', perPage);
-    console.log('🚀 ~ StockService ~ page:', page);
     {
       const paginate = createPaginator({ perPage });
       return paginate(
@@ -83,14 +81,14 @@ export class StockService {
   // }
 
   async remove(stockId: string) {
+    console.log('🚀 ~ StockService ~ remove ~ stockId:', stockId);
     try {
       await this.prisma.stock.delete({
         where: { id: stockId },
       });
+      return { success: true };
     } catch (error) {
       throw new Error(`Failed to delete product: ${error}`);
-    } finally {
-      await this.prisma.$disconnect();
     }
   }
 }
