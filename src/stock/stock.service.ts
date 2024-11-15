@@ -5,6 +5,8 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { PaginatedOutputDto } from './dto/paginated-out-dto';
 import { StockListElementWithRelations } from 'src/types/types';
 import { createPaginator } from 'prisma-pagination';
+import { Prisma } from '@prisma/client';
+import { Filter } from './entities/filter.entity';
 
 @Injectable()
 export class StockService {
@@ -18,27 +20,49 @@ export class StockService {
   async findAll(
     page: number,
     perPage: number,
+    filters: Record<string, any> = {},
   ): Promise<PaginatedOutputDto<StockListElementWithRelations>> {
-    {
-      const paginate = createPaginator({ perPage });
-      return paginate(
-        this.prisma.stock,
-        {
-          where: {},
-          include: {
-            product: true,
-            supplier: true,
+    // Создаём объект where для запроса
+    const where: Prisma.StockWhereInput = {};
+
+    // Применяем фильтры
+    filters.forEach((filter: Filter) => {
+      if (filter.id === 'description') {
+        where.product = {
+          description: {
+            contains: filter.value, // Поиск по описанию
+            mode: 'insensitive', // Нечувствительность к регистру
           },
-          /** Сортировка. Количество по убыванию. */
-          orderBy: {
-            quantity: 'desc',
+        };
+      }
+      if (filter.id === 'sku') {
+        where.product = {
+          sku: {
+            contains: filter.value, // Поиск по артикулу
+            mode: 'insensitive', // Нечувствительность к регистру
           },
+        };
+      }
+    });
+    const paginate = createPaginator({ perPage });
+
+    return paginate(
+      this.prisma.stock,
+      {
+        where,
+        include: {
+          product: true,
+          supplier: true,
         },
-        {
-          page,
+        /** Сортировка. Количество по убыванию. */
+        orderBy: {
+          quantity: 'desc',
         },
-      );
-    }
+      },
+      {
+        page,
+      },
+    );
   }
 
   /* Возвращает склад принадлежащий поставщику */

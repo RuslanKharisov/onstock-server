@@ -28,8 +28,10 @@ export class StockController {
   async findAll(
     @Query('page') page: number = 1,
     @Query('perPage') perPage: number = 10,
+    @Query('filters') filters: string,
   ) {
-    return await this.stockService.findAll(page, perPage);
+    const parsedFilters = filters ? JSON.parse(filters) : {};
+    return await this.stockService.findAll(page, perPage, parsedFilters);
   }
 
   @UseGuards(JwtAuthGuard)
