@@ -16,7 +16,6 @@ export class UsersService {
   ) {}
 
   async createUser(data: CreateUserDto) {
-    console.log('🚀 ~ UsersService ~ createUser ~ data:', data);
     const newUser = await this.prisma.user.create({
       data: {
         email: data.email,

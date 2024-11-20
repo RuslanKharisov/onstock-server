@@ -85,7 +85,7 @@ export class AuthService {
     if (existingUser) {
       return await this.sessionService.createSession(existingUser);
     } else {
-      this.usersService.createUser(dto);
+      return await this.usersService.createUser(dto);
     }
   }
 

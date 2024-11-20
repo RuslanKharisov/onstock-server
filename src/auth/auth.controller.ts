@@ -35,7 +35,8 @@ export class AuthController {
 
   @Post('oauth')
   async registerOauth(@Body() dto: RegisterOauthDto) {
-    return this.authService.registerOauth(dto);
+    const res = await this.authService.registerOauth(dto);
+    return res;
   }
 
   @UseGuards(AuthGuard('local'))
