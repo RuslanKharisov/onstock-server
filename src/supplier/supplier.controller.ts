@@ -47,7 +47,7 @@ export class SupplierController {
     return await this.supplierService.updateSupplierByUser(values, userId);
   }
 
-  @Get(':userId')
+  @Post(':userId')
   async getSupplierByUserId(@Param('userId') userId: string) {
     return await this.supplierService.getSupplierByUserId(userId);
   }
