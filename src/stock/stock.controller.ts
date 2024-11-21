@@ -30,7 +30,7 @@ export class StockController {
     @Query('perPage') perPage: number = 10,
     @Query('filters') filters: string,
   ) {
-    const parsedFilters = filters ? JSON.parse(filters) : {};
+    const parsedFilters = filters ? JSON.parse(filters) : [];
     return await this.stockService.findAll(page, perPage, parsedFilters);
   }
 
@@ -40,8 +40,10 @@ export class StockController {
     @Param('id') id: string,
     @Body('page') page: number = 1,
     @Body('perPage') perPage: number = 10,
+    @Body('filters') filters: string,
   ) {
-    return await this.stockService.findOne(page, perPage, id);
+    const parsedFilters = filters ? JSON.parse(filters) : [];
+    return await this.stockService.findOne(page, perPage, id, parsedFilters);
   }
 
   // @Patch(':id')

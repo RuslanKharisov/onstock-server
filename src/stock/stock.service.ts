@@ -20,7 +20,7 @@ export class StockService {
   async findAll(
     page: number,
     perPage: number,
-    filters: Record<string, any> = {},
+    filters: Record<string, any> = [],
   ): Promise<PaginatedOutputDto<StockListElementWithRelations>> {
     // Создаём объект where для запроса
     const where: Prisma.StockWhereInput = {};
@@ -70,34 +70,60 @@ export class StockService {
     page: number,
     perPage: number,
     id: string,
+    filters: Record<string, any> = [],
   ): Promise<PaginatedOutputDto<StockListElementWithRelations>> {
     const supplier = await this.prisma.supplier.findUnique({
       where: {
         userId: id,
       },
     });
-    if (supplier) {
-      {
-        const paginate = createPaginator({ perPage });
-        return paginate(
-          this.prisma.stock,
-          {
-            where: { supplierId: supplier.id },
-            include: {
-              product: true,
-              supplier: true,
-            },
-            /** Сортировка. Количество по убыванию. */
-            orderBy: {
-              quantity: 'desc',
-            },
-          },
-          {
-            page,
-          },
-        );
-      }
+
+    if (!supplier) {
+      throw new Error('Supplier not found');
     }
+
+    console.log('🚀 ~ StockService ~ filters:', filters);
+    // Создаём объект where для запроса
+    const where: Prisma.StockWhereInput = { supplierId: supplier.id };
+
+    // Применяем фильтры
+    filters.forEach((filter: Filter) => {
+      if (filter.id === 'description') {
+        where.product = {
+          description: {
+            contains: filter.value, // Поиск по описанию
+            mode: 'insensitive', // Нечувствительность к регистру
+          },
+        };
+      }
+      if (filter.id === 'sku') {
+        where.product = {
+          sku: {
+            contains: filter.value, // Поиск по артикулу
+            mode: 'insensitive', // Нечувствительность к регистру
+          },
+        };
+      }
+    });
+
+    const paginate = createPaginator({ perPage });
+    return paginate(
+      this.prisma.stock,
+      {
+        where,
+        include: {
+          product: true,
+          supplier: true,
+        },
+        /** Сортировка. Количество по убыванию. */
+        orderBy: {
+          quantity: 'desc',
+        },
+      },
+      {
+        page,
+      },
+    );
   }
 
   // update(id: string, updateStockDto: UpdateStockDto) {
