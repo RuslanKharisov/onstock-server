@@ -26,7 +26,7 @@ export class MailService {
       from: 'Промышленный склад OnStock <onboarding@resend.dev>',
       to: email,
       subject: 'Сброс пароля',
-      html: `<p>Нажмите <a href="${resetLink}">здесь</a>, чтобы сбросить пароль</p>`,
+      html: `<h2>Перейдите на <a href="${resetLink}">страницу</a> установки нового пароля.</h2>`,
     });
   }
 

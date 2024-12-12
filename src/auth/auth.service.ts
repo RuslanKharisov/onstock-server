@@ -246,8 +246,11 @@ export class AuthService {
   /* Логика для сброса пароля */
   async resetPassword(
     token: string,
-    newPassword: string,
+    password: string,
   ): Promise<{ success?: string; error?: string }> {
+    if (!password) {
+      return { error: 'Ошибка чтения пароля' };
+    }
     // Валидация токена
     const payload = await this.jwtTokenService.verifyToken(token);
     if (!payload) {
@@ -258,8 +261,7 @@ export class AuthService {
 
     try {
       // Обновление пароля в базе данных
-      this.usersService.updateUserPassword(userId, newPassword);
-      return { success: 'Пароль успешно изменён' };
+      return this.usersService.updateUserPassword(userId, password);
     } catch (error) {
       console.error(error);
       return { error: 'Ошибка при изменении пароля' };
