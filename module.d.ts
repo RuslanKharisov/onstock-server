@@ -5,5 +5,6 @@ declare namespace NodeJS {
     JWT_REFRESH_SECRET: string;
     RESEND_API_KEY: string;
     RESEND_CONFIRM_URL: string;
+    CLIENT_URL: string;
   }
 }

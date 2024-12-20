@@ -23,13 +23,17 @@ export class UsersService {
         password: data.password,
         image: data.image,
         emailVerified: new Date(),
-        accounts: {
-          create: {
-            type: data.type, // Обязательно добавьте это поле
-            provider: data.provider,
-            providerAccountId: data.providerAccountId,
-          },
-        },
+        ...(data.provider && data.providerAccountId
+          ? {
+              accounts: {
+                create: {
+                  type: data.type,
+                  provider: data.provider,
+                  providerAccountId: data.providerAccountId,
+                },
+              },
+            }
+          : {}),
       },
     });
     return await this.sessionService.createSession(newUser);

@@ -13,13 +13,34 @@ const tariffs = [
 ];
 
 async function seed() {
-  await dbClient.tariff.deleteMany();
-  // запрос заполняет таблицу с тарифами
-  await dbClient.tariff.createMany({ data: tariffs });
+  // Проверяем, пуста ли таблица
+  const count = await dbClient.tariff.count();
+
+  if (count === 0) {
+    // Если пуста, заполняем
+    await dbClient.tariff.createMany({ data: tariffs });
+    console.log('Таблица тарифов была пуста. Данные добавлены.');
+  } else {
+    // Если не пуста, обновляем записи
+    for (const tariff of tariffs) {
+      await dbClient.tariff.upsert({
+        where: { name: tariff.name },
+        update: {
+          maxProducts: tariff.maxProducts,
+          pricePerUnit: tariff.pricePerUnit,
+        },
+        create: tariff,
+      });
+    }
+    console.log(
+      'Таблица тарифов уже содержала данные. Обновлены существующие записи.',
+    );
+  }
 }
 
 seed()
   .catch((e) => {
+    console.error('Ошибка при заполнении данных:', e);
     throw e;
   })
   .finally(async () => {

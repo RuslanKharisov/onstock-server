@@ -30,6 +30,7 @@ export class AuthController {
 
   @Post('register')
   async register(@Body() dto: RegisterDto) {
+    console.log('🚀 ~ AuthController ~ register ~ dto:', dto);
     return this.authService.register(dto);
   }
 
@@ -43,6 +44,7 @@ export class AuthController {
   @Post('login')
   async login(@Request() req) {
     const user = req.user;
+    console.log('🚀 ~ AuthController ~ login ~ user:', user);
     // Если email не подтверждён, возвращаем ошибку
     if (user.error) {
       return { error: user.error };
